@@ -71,11 +71,6 @@ namespace Origam.ProjectAutomation.Builders
         }
         private void RunDocker(string databaseAdminPassword, Project project)
         {
-            //string attrib = " run --env-file " + project.DockerEnvPath +
-            //    " -e PG_Origam_Password=" + databaseAdminPassword + " -it " +
-            //    "--name " + project.Name + " --mount source=" + project.Name + ",target=/var/lib/postgresql " +
-            //    " -v " + project.SourcesFolder + ":/home/origam/HTML5/data/origam -p " +
-            //    project.DockerPort.ToString() + ":8080 -p 5433:5433 origam/server:pg_master-latest";
             string argument = string.Format(" run --env-file {0} -e PG_Origam_Password={1} -it --name {2} " +
                 "--mount source={3},target=/var/lib/postgresql -v {4}:/home/origam/HTML5/data/origam -p {5}:8080 " +
                 "-p 5433:5433 origam/server:pg_master-latest ",
