@@ -44,6 +44,7 @@ using static Origam.NewProjectEnums;
 using Origam.Extensions;
 using Origam.DA.Service;
 using NPOI.Util;
+using Origam.Docker;
 
 namespace OrigamArchitect
 {
@@ -462,23 +463,11 @@ namespace OrigamArchitect
                     break;
                 case DeploymentType.DockerPostgres:
                     pageDeploymentType.NextPage = pageTemplateType;
-                    //Pull docker image
-                    pullDockerImage();
+                    //Pull docker image. This is for save time. The image size is 1,3 GB. 
+                    DockerManager.RunDocker("pull origam/server:pg_master-latest");
                     break;
             }
         }
-
-        private void pullDockerImage()
-        {
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.CreateNoWindow = false;
-            startInfo.UseShellExecute = false;
-            startInfo.FileName = @"c:\Program Files\Docker\Docker\resources\bin\docker.exe";
-            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            startInfo.Arguments = " pull origam/server:pg_master-latest";
-            Process.Start(startInfo);
-        }
-
         private void pageDeploymentType_Initialize(object sender, WizardPageInitEventArgs e)
         {
             if (cboDeploymentType.SelectedIndex < 0)
