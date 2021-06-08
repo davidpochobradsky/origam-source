@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using static Origam.DA.Common.Enums;
 
 namespace Origam.ProjectAutomation.Builders
@@ -41,10 +42,14 @@ namespace Origam.ProjectAutomation.Builders
                 }
                 else if(project.Deployment == DeploymentType.DockerPostgres)
                 {
-                    string text = "docker exec -it " + project.Name + " bash startOrigamServer.sh";
-                    File.WriteAllText(cmdfile, text);
-                    cmdfile = Path.Combine(newProjectFolder, "StartDocker" + project.Name + ".cmd");
-                    text = "docker start " + project.Name;
+                    File.Delete(cmdfile);
+                    cmdfile = Path.Combine(newProjectFolder, "StartWebServer_" + project.Name + ".cmd");
+                    var stringBuilder = new StringBuilder();
+                    stringBuilder.AppendLine("docker start " + project.Name);
+                    stringBuilder.Append("docker exec -it " + project.Name + " bash startOrigamServer.sh");
+                    File.WriteAllText(cmdfile, stringBuilder.ToString());
+                    cmdfile = Path.Combine(newProjectFolder, "StartContainer_" + project.Name + ".cmd");
+                    string text = "docker start " + project.Name;
                     File.WriteAllText(cmdfile, text);
                 }
             }

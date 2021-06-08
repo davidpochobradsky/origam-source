@@ -19,44 +19,170 @@ along with ORIGAM. If not, see <http://www.gnu.org/licenses/>.
 */
 #endregion
 
-using System.Diagnostics;
+using Docker.DotNet;
+using Docker.DotNet.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Origam.Docker
 {
     public static class DockerManager
     {
-        private const string DockerExePath = @"c:\Program Files\Docker\Docker\resources\bin\docker.exe";
-       
-        public static string GetDockerConsole(string argument)
+        private static  DockerClient client = new DockerClientConfiguration().CreateClient();
+        private static bool finished = false;
+
+        public static void IsDockerInstaled()
         {
-            Process process = new Process();
-            // Redirect the output stream of the child process.
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.FileName = DockerExePath;
-            process.StartInfo.Arguments = argument;
-            process.StartInfo.CreateNoWindow = true;
-            process.Start();
-            // Do not wait for the child process to exit before
-            // reading to the end of its redirected stream.
-            // p.WaitForExit();
-            // Read the output stream first and then wait.
-            string output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
+            var task = Task.Run(async () =>
+            {
+                return await client.System.GetVersionAsync();
+            });
+            VersionResponse result = task.Result;
+        }
+        public static void CreateVolume(string name)
+        {
+            VolumesCreateParameters volumesCreateParameters = new VolumesCreateParameters
+            {
+                Name = name
+            };
+            var task = Task.Run(async () =>
+            {
+                return await client.Volumes.CreateAsync(volumesCreateParameters);
+            });
+            var result = task.Result;
+        }
+
+        public static bool GetDockerVolume(string volumeName)
+        {
+            var task = Task.Run(async () =>
+            {
+                return await client.Volumes.ListAsync();
+            });
+            return task.Result.Volumes.Where(volumelist => volumelist.Name == volumeName).Any();
+        }
+        public static void PullImage(string image, string tag)
+        {
+            finished = false;
+            var progress = new Progress<JSONMessage>();
+            progress.ProgressChanged += Progress_ProgressChanged;
+            client.Images.CreateImageAsync(
+                new ImagesCreateParameters()
+                {
+                    FromImage = image,
+                    Tag = tag
+                }, null,
+                progress).ConfigureAwait(false);
+        }
+
+        public static string GetDockerLogs(string id)
+        {
+            string output;
+            ContainerLogsParameters logparams = new ContainerLogsParameters { ShowStdout=true};
+            var task = Task.Run(async () =>
+            {
+                return await client.Containers.GetContainerLogsAsync(id, logparams);
+            });
+            var streamlogs = task.Result;
+            using (var reader = new StreamReader(streamlogs))
+            {
+                output = reader.ReadToEnd();
+            }
             return output;
         }
 
-        public static void RunDocker(string argument)
+        public static string RunDocker(IDictionary<string, string> arguments)
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo
+            IsImagePulled();
+            IList<string> env = new List<string>();
+            string[] envfile = File.ReadAllLines(arguments["DockerEnvPath"]);
+            env.Add(string.Format("PG_Origam_Password={0}", arguments["AdminPassword"]));
+            foreach (string line in envfile)
             {
-                CreateNoWindow = false,
-                UseShellExecute = false,
-                FileName = DockerExePath,
-                WindowStyle = ProcessWindowStyle.Hidden,
-                Arguments = argument
+                env.Add(line);
+            }
+
+            IDictionary<string, EmptyStruct> volume = new Dictionary<string, EmptyStruct>();
+            volume.Add("/var/lib/postgresql", new EmptyStruct { });
+
+            IList<Mount> mounts = new List<Mount>
+            {
+                new Mount { Source = arguments["ProjectName"], Target = "/var/lib/postgresql",Type = "volume"},
+                 new Mount { Source = arguments["SourceFolder"], Target = "/home/origam/HTML5/data/origam",Type = "bind"}
             };
-            Process.Start(startInfo);
+            IDictionary<string, IList<PortBinding>> portbind = new Dictionary<string, IList<PortBinding>>
+            {
+                { "8080/tcp", new List<PortBinding> { new PortBinding {HostPort = arguments["DockerPort"] } }},
+                { "5433/tcp", new List<PortBinding> { new PortBinding {HostPort = "5433" }}}
+            };
+
+            HostConfig hostconfig = new HostConfig
+            {
+                Mounts = mounts,
+                PortBindings = portbind,
+                PublishAllPorts = true
+            };
+            IDictionary<string, EmptyStruct> exposePort = new Dictionary<string, EmptyStruct>
+            {
+                { "5433/tcp", default },
+                { "8080/tcp", default }
+            };
+
+            CreateContainerParameters create_containerParameters = new CreateContainerParameters
+            {
+                Name = arguments["ProjectName"],
+                Image = "origam/server:pg_master-latest",
+                Env = env,
+                HostConfig = hostconfig,
+                ExposedPorts = exposePort
+            };
+
+            var containerTask = Task.Run(async () =>
+            {
+                return await client.Containers.CreateContainerAsync(
+                                    create_containerParameters);
+            });
+            var createcontainer = containerTask.Result;
+
+            var startContanerTask = Task.Run(async () =>
+            {
+                return await client.Containers.StartContainerAsync(createcontainer.ID,
+                                    new ContainerStartParameters());
+            });
+            if (startContanerTask.Result)
+            {
+                return createcontainer.ID;
+            }
+            throw new Exception("Docker Container doesnt start. Please check a log.");
+        }
+
+        private static void IsImagePulled()
+        {
+            long dockerdateTime = DateTime.Now.AddSeconds(60).Ticks;
+            while (DateTime.Now.Ticks < dockerdateTime)
+            {
+                Thread.Sleep(5000);
+                if (finished)
+                {
+                    return;
+                }
+            }
+
+        }
+
+        private static void Progress_ProgressChanged(object sender, JSONMessage prog_msg)
+        {
+            if(prog_msg.Status.Contains("Status: Downloaded"))
+            {
+                finished = true;
+            }
+            if (prog_msg.Status.Contains("Status: Image is up to date"))
+            {
+                finished = true;
+            }
         }
     }
 }

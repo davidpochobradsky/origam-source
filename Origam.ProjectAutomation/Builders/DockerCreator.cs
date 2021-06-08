@@ -21,7 +21,7 @@ along with ORIGAM. If not, see <http://www.gnu.org/licenses/>.
 
 using Origam.Docker;
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace Origam.ProjectAutomation.Builders
@@ -29,58 +29,52 @@ namespace Origam.ProjectAutomation.Builders
     public class DockerCreator : AbstractBuilder
     {
         public override string Name => "Start Docker Container";
-        private string VolumeName;
-        private string DockerExePath = @"c:\Program Files\Docker\Docker\resources\bin\docker.exe";
-
         public override void Execute(Project project)
         {
-            IsDockerInstaled();
-            VolumeName = project.Name;
-            DoesContainerExist();
+            DockerManager.IsDockerInstaled();
+            DoesContainerExist(project.Name);
             string DatabaseAdminPassword = Project.CreatePassword();
-            Process.Start(DockerExePath, " volume create " + project.Name);
-            Thread.Sleep(2000);
-            RunDocker(DatabaseAdminPassword, project);
+            string containerId = RunDocker(DatabaseAdminPassword, project);
             project.DatabaseUserName = "postgres";
             project.DatabasePassword = DatabaseAdminPassword;
-            if(!WaitForDocker())
+            if(!WaitForDocker(containerId))
             { 
                 throw new Exception("Docker didn't start. Please check Docker logs.");
             }
         }
-        private void DoesContainerExist()
+        private void DoesContainerExist(string volumeName)
         {
-            string output = DockerManager.GetDockerConsole("volume list");
-            if (output.Contains("VolumeName"))
+            if (DockerManager.GetDockerVolume(volumeName))
             {
                 throw new Exception("Data Postgres container already exists.");
             }
         }
-        private bool WaitForDocker()
+        private bool WaitForDocker(string containerId)
         {
             long dockerdateTime = DateTime.Now.AddSeconds(60).Ticks;
             while (DateTime.Now.Ticks < dockerdateTime)
             {
                 Thread.Sleep(5000);
-                if (IsDockerRunning())
+                if (IsDockerRunning(containerId))
                 {
                     return true;
                 }
             }
             return false;
         }
-        private void RunDocker(string databaseAdminPassword, Project project)
+        private string RunDocker(string databaseAdminPassword, Project project)
         {
-            string argument = string.Format(" run --env-file {0} -e PG_Origam_Password={1} -it --name {2} " +
-                "--mount source={3},target=/var/lib/postgresql -v {4}:/home/origam/HTML5/data/origam -p {5}:8080 " +
-                "-p 5433:5433 origam/server:pg_master-latest ",
-                project.DockerEnvPath, databaseAdminPassword, project.Name,project.Name, project.SourcesFolder,
-                project.DockerPort.ToString());
-            DockerManager.RunDocker(argument);
+            IDictionary<string, string> arguments = new Dictionary<string, string>();
+            arguments.Add("DockerEnvPath",project.DockerEnvPath);
+            arguments.Add("AdminPassword",databaseAdminPassword);
+            arguments.Add("ProjectName",project.Name);
+            arguments.Add("SourceFolder",project.SourcesFolder);
+            arguments.Add("DockerPort",project.DockerPort.ToString());
+            return DockerManager.RunDocker(arguments);
         }
-        private bool IsDockerRunning()
+        private bool IsDockerRunning(string containerId)
         {
-            string output = DockerManager.GetDockerConsole("logs " + VolumeName);
+            string output = DockerManager.GetDockerLogs(containerId);
             if (output.Contains("Press [CTRL+C] to stop"))
             {
                 return true;
@@ -90,14 +84,6 @@ namespace Origam.ProjectAutomation.Builders
                 throw new Exception("Docker started with an error. Please check Docker logs.");
             }
             return false;
-        }
-        private void IsDockerInstaled()
-        {
-            string output = DockerManager.GetDockerConsole("ps");
-            if (!output.Contains("COMMAND"))
-            {
-                throw new Exception("Docker Desktop is not installed or is not running.");
-            }
         }
         public override void Rollback()
         {

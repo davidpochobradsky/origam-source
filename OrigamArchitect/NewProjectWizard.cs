@@ -464,7 +464,7 @@ namespace OrigamArchitect
                 case DeploymentType.DockerPostgres:
                     pageDeploymentType.NextPage = pageTemplateType;
                     //Pull docker image. This is to save time. The image size is 1,3 GB. 
-                    DockerManager.RunDocker("pull origam/server:pg_master-latest");
+                    DockerManager.PullImage("origam/server","pg_master-latest");
                     break;
             }
         }
