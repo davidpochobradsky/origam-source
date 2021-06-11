@@ -29,40 +29,44 @@ namespace Origam.ProjectAutomation.Builders
     public class DockerCreator : AbstractBuilder
     {
         public override string Name => "Start Docker Container";
+        private readonly DockerManager dockerManager = new DockerManager();
         public override void Execute(Project project)
         {
-            DockerManager.IsDockerInstaled();
-            DoesContainerExist(project.Name);
+            if(!dockerManager.IsDockerInstaled())
+            {
+                throw new Exception("Docker is prerequired. Please install Docker.");
+            }
+            if(dockerManager.IsDockerVolumeAlreadyExists(project.Name))
+            {
+                throw new Exception(string.Format("Docker Volume {0} already exists. " +
+                    "Please chose different Project Name.",project.Name));
+            }
+            dockerManager.CreateVolume(project.Name);
             string DatabaseAdminPassword = Project.CreatePassword();
-            string containerId = RunDocker(DatabaseAdminPassword, project);
+            string containerId = StartDockerContainer(DatabaseAdminPassword, project);
             project.DatabaseUserName = "postgres";
             project.DatabasePassword = DatabaseAdminPassword;
-            if(!WaitForDocker(containerId))
+            if(!IsContainerPrepared(containerId))
             { 
-                throw new Exception("Docker didn't start. Please check Docker logs.");
+                throw new Exception(string.Format("Docker didn't start. " +
+                    "Please check the container {0} logs.",project.Name));
             }
         }
-        private void DoesContainerExist(string volumeName)
-        {
-            if (DockerManager.GetDockerVolume(volumeName))
-            {
-                throw new Exception("Data Postgres container already exists.");
-            }
-        }
-        private bool WaitForDocker(string containerId)
+
+        private bool IsContainerPrepared(string containerId)
         {
             long dockerdateTime = DateTime.Now.AddSeconds(60).Ticks;
             while (DateTime.Now.Ticks < dockerdateTime)
             {
                 Thread.Sleep(5000);
-                if (IsDockerRunning(containerId))
+                if (IsContainerRunningProperly(containerId))
                 {
                     return true;
                 }
             }
             return false;
         }
-        private string RunDocker(string databaseAdminPassword, Project project)
+        private string StartDockerContainer(string databaseAdminPassword, Project project)
         {
             IDictionary<string, string> arguments = new Dictionary<string, string>();
             arguments.Add("DockerEnvPath",project.DockerEnvPath);
@@ -70,11 +74,11 @@ namespace Origam.ProjectAutomation.Builders
             arguments.Add("ProjectName",project.Name);
             arguments.Add("SourceFolder",project.SourcesFolder);
             arguments.Add("DockerPort",project.DockerPort.ToString());
-            return DockerManager.RunDocker(arguments);
+            return dockerManager.StartDockerContainer(arguments,"origam/server:pg_master-latest");
         }
-        private bool IsDockerRunning(string containerId)
+        private bool IsContainerRunningProperly(string containerId)
         {
-            string output = DockerManager.GetDockerLogs(containerId);
+            string output = dockerManager.GetDockerLogs(containerId);
             if (output.Contains("Press [CTRL+C] to stop"))
             {
                 return true;

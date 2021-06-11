@@ -30,33 +30,50 @@ using System.Threading.Tasks;
 
 namespace Origam.Docker
 {
-    public static class DockerManager
+    public class DockerManager
     {
-        private static  DockerClient client = new DockerClientConfiguration().CreateClient();
-        private static bool finished = false;
-
-        public static void IsDockerInstaled()
+        private readonly DockerClient client;
+        public DockerManager()
         {
-            var task = Task.Run(async () =>
-            {
-                return await client.System.GetVersionAsync();
-            });
-            VersionResponse result = task.Result;
+            client = new DockerClientConfiguration().CreateClient();
         }
-        public static void CreateVolume(string name)
+
+        public  bool IsDockerInstaled()
+        {
+            try
+            {
+                var task = Task.Run(async () =>
+                {
+                    return await client.System.GetVersionAsync();
+                }).GetAwaiter().GetResult();
+            } catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return false; 
+            }
+            return true;
+        }
+        public bool CreateVolume(string name)
         {
             VolumesCreateParameters volumesCreateParameters = new VolumesCreateParameters
             {
                 Name = name
             };
-            var task = Task.Run(async () =>
+            try
             {
-                return await client.Volumes.CreateAsync(volumesCreateParameters);
-            });
-            var result = task.Result;
+                var task = Task.Run(async () =>
+                {
+                    return await client.Volumes.CreateAsync(volumesCreateParameters);
+                }).GetAwaiter().GetResult();
+            } catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return false;
+            }
+            return true;
         }
 
-        public static bool GetDockerVolume(string volumeName)
+        public  bool IsDockerVolumeAlreadyExists(string volumeName)
         {
             var task = Task.Run(async () =>
             {
@@ -64,11 +81,9 @@ namespace Origam.Docker
             });
             return task.Result.Volumes.Where(volumelist => volumelist.Name == volumeName).Any();
         }
-        public static void PullImage(string image, string tag)
+        public bool PullImage(string image, string tag)
         {
-            finished = false;
             var progress = new Progress<JSONMessage>();
-            progress.ProgressChanged += Progress_ProgressChanged;
             client.Images.CreateImageAsync(
                 new ImagesCreateParameters()
                 {
@@ -76,9 +91,10 @@ namespace Origam.Docker
                     Tag = tag
                 }, null,
                 progress).ConfigureAwait(false);
+            return true;
         }
 
-        public static string GetDockerLogs(string id)
+        public string GetDockerLogs(string id)
         {
             string output;
             ContainerLogsParameters logparams = new ContainerLogsParameters { ShowStdout=true};
@@ -94,9 +110,14 @@ namespace Origam.Docker
             return output;
         }
 
-        public static string RunDocker(IDictionary<string, string> arguments)
+        public  string StartDockerContainer(IDictionary<string, string> arguments, string imagename)
         {
-            IsImagePulled();
+            if (!IsImageAlreadyPulled(imagename))
+            {
+                throw new Exception(
+                    string.Format("Docker image {0} didnt pull in time. Please check log.", 
+                    imagename));
+            }
             IList<string> env = new List<string>();
             string[] envfile = File.ReadAllLines(arguments["DockerEnvPath"]);
             env.Add(string.Format("PG_Origam_Password={0}", arguments["AdminPassword"]));
@@ -105,8 +126,10 @@ namespace Origam.Docker
                 env.Add(line);
             }
 
-            IDictionary<string, EmptyStruct> volume = new Dictionary<string, EmptyStruct>();
-            volume.Add("/var/lib/postgresql", new EmptyStruct { });
+            IDictionary<string, EmptyStruct> volume = new Dictionary<string, EmptyStruct>
+            {
+                { "/var/lib/postgresql", new EmptyStruct { } }
+            };
 
             IList<Mount> mounts = new List<Mount>
             {
@@ -159,30 +182,33 @@ namespace Origam.Docker
             throw new Exception("Docker Container doesnt start. Please check a log.");
         }
 
-        private static void IsImagePulled()
+        private  bool IsImageAlreadyPulled(string imagename)
         {
             long dockerdateTime = DateTime.Now.AddSeconds(60).Ticks;
             while (DateTime.Now.Ticks < dockerdateTime)
             {
                 Thread.Sleep(5000);
-                if (finished)
+                if (DoesImageExist(imagename))
                 {
-                    return;
+                    return true;
                 }
             }
-
+            return false;
         }
 
-        private static void Progress_ProgressChanged(object sender, JSONMessage prog_msg)
+        private bool DoesImageExist(string imagename)
         {
-            if(prog_msg.Status.Contains("Status: Downloaded"))
+            try
             {
-                finished = true;
-            }
-            if (prog_msg.Status.Contains("Status: Image is up to date"))
+                var inspectImageTask = Task.Run(async () =>
+                {
+                    return await client.Images.InspectImageAsync(imagename);
+                }).GetAwaiter().GetResult();
+            } catch
             {
-                finished = true;
+                return false;
             }
+            return true;
         }
     }
 }

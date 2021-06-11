@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Origam.ProjectAutomation</RootNamespace>
     <AssemblyName>Origam.ProjectAutomation</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <NuGetPackageImportStamp>
@@ -136,6 +136,10 @@
     <ProjectReference Include="..\Origam.DA.Service\Origam.DA.Service.csproj">
       <Project>{ff4722b4-01f8-4062-af39-f243a6bf336d}</Project>
       <Name>Origam.DA.Service</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Origam.Schema\Origam.Schema.csproj">
+      <Project>{976F3ABA-938D-4242-A93B-7D7A1861A66E}</Project>
+      <Name>Origam.Schema</Name>
     </ProjectReference>
     <ProjectReference Include="..\Origam.Security.Common\Origam.Security.Common.csproj">
       <Project>{66fae794-7352-440f-b24d-684686a62cf5}</Project>

@@ -45,6 +45,7 @@ using Origam.Extensions;
 using Origam.DA.Service;
 using NPOI.Util;
 using Origam.Docker;
+using System.Reflection;
 
 namespace OrigamArchitect
 {
@@ -464,7 +465,16 @@ namespace OrigamArchitect
                 case DeploymentType.DockerPostgres:
                     pageDeploymentType.NextPage = pageTemplateType;
                     //Pull docker image. This is to save time. The image size is 1,3 GB. 
-                    DockerManager.PullImage("origam/server","pg_master-latest");
+                    var preffixtag = "pg_";
+                    var tag = "master-latest";
+                    var currentVersion = Assembly.GetExecutingAssembly().
+                        GetCustomAttribute<AssemblyFileVersionAttribute>().Version;
+                    Console.WriteLine(string.Format("Current version is {0}",currentVersion));
+                    if(!currentVersion.StartsWith("0.0.0.0"))
+                    {
+                        tag = currentVersion;
+                    }
+                    new DockerManager().PullImage("origam/server", preffixtag + tag);
                     break;
             }
         }
