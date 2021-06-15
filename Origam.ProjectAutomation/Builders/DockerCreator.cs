@@ -36,7 +36,7 @@ namespace Origam.ProjectAutomation.Builders
             {
                 throw new Exception("Docker is prerequired. Please install Docker.");
             }
-            if(dockerManager.IsDockerVolumeAlreadyExists(project.Name))
+            if(dockerManager.DockerVolumeExists(project.Name))
             {
                 throw new Exception(string.Format("Docker Volume {0} already exists. " +
                     "Please chose different Project Name.",project.Name));
@@ -68,13 +68,15 @@ namespace Origam.ProjectAutomation.Builders
         }
         private string StartDockerContainer(string databaseAdminPassword, Project project)
         {
-            IDictionary<string, string> arguments = new Dictionary<string, string>();
-            arguments.Add("DockerEnvPath",project.DockerEnvPath);
-            arguments.Add("AdminPassword",databaseAdminPassword);
-            arguments.Add("ProjectName",project.Name);
-            arguments.Add("SourceFolder",project.SourcesFolder);
-            arguments.Add("DockerPort",project.DockerPort.ToString());
-            return dockerManager.StartDockerContainer(arguments,"origam/server:pg_master-latest");
+            DockerContainerParameter containerParameters = new DockerContainerParameter
+            {
+                DockerEnvPath = project.DockerEnvPath,
+                AdminPassword = databaseAdminPassword,
+                ProjectName = project.Name,
+                SourceFolder = project.SourcesFolder,
+                DockerPort = project.DockerPort.ToString()
+            };
+            return dockerManager.StartDockerContainer(containerParameters, "origam/server:pg_master-latest");
         }
         private bool IsContainerRunningProperly(string containerId)
         {

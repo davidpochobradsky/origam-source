@@ -73,7 +73,7 @@ namespace Origam.Docker
             return true;
         }
 
-        public  bool IsDockerVolumeAlreadyExists(string volumeName)
+        public  bool DockerVolumeExists(string volumeName)
         {
             var task = Task.Run(async () =>
             {
@@ -110,7 +110,7 @@ namespace Origam.Docker
             return output;
         }
 
-        public  string StartDockerContainer(IDictionary<string, string> arguments, string imagename)
+        public  string StartDockerContainer(DockerContainerParameter containerParameter, string imagename)
         {
             if (!IsImageAlreadyPulled(imagename))
             {
@@ -119,8 +119,8 @@ namespace Origam.Docker
                     imagename));
             }
             IList<string> env = new List<string>();
-            string[] envfile = File.ReadAllLines(arguments["DockerEnvPath"]);
-            env.Add(string.Format("PG_Origam_Password={0}", arguments["AdminPassword"]));
+            string[] envfile = File.ReadAllLines(containerParameter.DockerEnvPath);
+            env.Add(string.Format("PG_Origam_Password={0}", containerParameter.AdminPassword));
             foreach (string line in envfile)
             {
                 env.Add(line);
@@ -133,12 +133,12 @@ namespace Origam.Docker
 
             IList<Mount> mounts = new List<Mount>
             {
-                new Mount { Source = arguments["ProjectName"], Target = "/var/lib/postgresql",Type = "volume"},
-                 new Mount { Source = arguments["SourceFolder"], Target = "/home/origam/HTML5/data/origam",Type = "bind"}
+                new Mount { Source = containerParameter.ProjectName, Target = "/var/lib/postgresql",Type = "volume"},
+                 new Mount { Source = containerParameter.SourceFolder, Target = "/home/origam/HTML5/data/origam",Type = "bind"}
             };
             IDictionary<string, IList<PortBinding>> portbind = new Dictionary<string, IList<PortBinding>>
             {
-                { "8080/tcp", new List<PortBinding> { new PortBinding {HostPort = arguments["DockerPort"] } }},
+                { "8080/tcp", new List<PortBinding> { new PortBinding {HostPort = containerParameter.DockerPort } }},
                 { "5433/tcp", new List<PortBinding> { new PortBinding {HostPort = "5433" }}}
             };
 
@@ -156,7 +156,7 @@ namespace Origam.Docker
 
             CreateContainerParameters create_containerParameters = new CreateContainerParameters
             {
-                Name = arguments["ProjectName"],
+                Name = containerParameter.ProjectName,
                 Image = "origam/server:pg_master-latest",
                 Env = env,
                 HostConfig = hostconfig,
