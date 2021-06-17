@@ -20,8 +20,8 @@ along with ORIGAM. If not, see <http://www.gnu.org/licenses/>.
 #endregion
 
 using Origam.Docker;
+using Origam.Extensions;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace Origam.ProjectAutomation.Builders
@@ -29,7 +29,14 @@ namespace Origam.ProjectAutomation.Builders
     public class DockerCreator : AbstractBuilder
     {
         public override string Name => "Start Docker Container";
-        private readonly DockerManager dockerManager = new DockerManager();
+        private DockerManager dockerManager;
+        private string v;
+
+        public DockerCreator(string tag)
+        {
+            this.dockerManager = new DockerManager(tag);
+        }
+
         public override void Execute(Project project)
         {
             if(!dockerManager.IsDockerInstaled())
@@ -76,7 +83,7 @@ namespace Origam.ProjectAutomation.Builders
                 SourceFolder = project.SourcesFolder,
                 DockerPort = project.DockerPort.ToString()
             };
-            return dockerManager.StartDockerContainer(containerParameters, "origam/server:pg_master-latest");
+            return dockerManager.StartDockerContainer(containerParameters);
         }
         private bool IsContainerRunningProperly(string containerId)
         {

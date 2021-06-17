@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -159,6 +160,17 @@ namespace Origam.Extensions
             {
                 return Convert.ToBase64String(md5.ComputeHash(new MemoryStream(bytes)));
             }
+        }
+        public static string GetAssemblyVersion(this string tag)
+        {
+            var currentVersion = Assembly.GetExecutingAssembly().
+                GetCustomAttribute<AssemblyFileVersionAttribute>().Version;
+            Console.WriteLine(string.Format("Current version is {0}", currentVersion));
+            if (!currentVersion.StartsWith("1.0.0.0"))
+            {
+                tag = currentVersion;
+            }
+            return tag;
         }
     }
 }

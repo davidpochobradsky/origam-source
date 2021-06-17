@@ -33,9 +33,22 @@ namespace Origam.Docker
     public class DockerManager
     {
         private readonly DockerClient client;
-        public DockerManager()
+        private readonly string prefix = "pg_";
+        private readonly string tag;
+        private readonly string repository = "origam/server";
+        private string Imagename
+        {
+            get
+            {
+                //"origam/server:pg_master-latest"
+                return string.Format("{0}:{1}{2}",repository,prefix,tag);
+            }
+        }
+
+        public DockerManager(string tag)
         {
             client = new DockerClientConfiguration().CreateClient();
+            this.tag = tag;
         }
 
         public  bool IsDockerInstaled()
@@ -81,14 +94,14 @@ namespace Origam.Docker
             });
             return task.Result.Volumes.Where(volumelist => volumelist.Name == volumeName).Any();
         }
-        public bool PullImage(string image, string tag)
+        public bool PullImage()
         {
             var progress = new Progress<JSONMessage>();
             client.Images.CreateImageAsync(
                 new ImagesCreateParameters()
                 {
-                    FromImage = image,
-                    Tag = tag
+                    FromImage = repository,
+                    Tag = prefix + tag
                 }, null,
                 progress).ConfigureAwait(false);
             return true;
@@ -110,13 +123,13 @@ namespace Origam.Docker
             return output;
         }
 
-        public  string StartDockerContainer(DockerContainerParameter containerParameter, string imagename)
+        public  string StartDockerContainer(DockerContainerParameter containerParameter)
         {
-            if (!IsImageAlreadyPulled(imagename))
+            if (!IsImageAlreadyPulled())
             {
                 throw new Exception(
                     string.Format("Docker image {0} didnt pull in time. Please check log.", 
-                    imagename));
+                    repository));
             }
             IList<string> env = new List<string>();
             string[] envfile = File.ReadAllLines(containerParameter.DockerEnvPath);
@@ -157,7 +170,7 @@ namespace Origam.Docker
             CreateContainerParameters create_containerParameters = new CreateContainerParameters
             {
                 Name = containerParameter.ProjectName,
-                Image = "origam/server:pg_master-latest",
+                Image = Imagename,
                 Env = env,
                 HostConfig = hostconfig,
                 ExposedPorts = exposePort
@@ -182,13 +195,13 @@ namespace Origam.Docker
             throw new Exception("Docker Container doesnt start. Please check a log.");
         }
 
-        private  bool IsImageAlreadyPulled(string imagename)
+        private  bool IsImageAlreadyPulled()
         {
             long dockerdateTime = DateTime.Now.AddSeconds(60).Ticks;
             while (DateTime.Now.Ticks < dockerdateTime)
             {
                 Thread.Sleep(5000);
-                if (DoesImageExist(imagename))
+                if (DoesImageExist())
                 {
                     return true;
                 }
@@ -196,13 +209,13 @@ namespace Origam.Docker
             return false;
         }
 
-        private bool DoesImageExist(string imagename)
+        private bool DoesImageExist()
         {
             try
             {
                 var inspectImageTask = Task.Run(async () =>
                 {
-                    return await client.Images.InspectImageAsync(imagename);
+                    return await client.Images.InspectImageAsync(Imagename);
                 }).GetAwaiter().GetResult();
             } catch
             {
