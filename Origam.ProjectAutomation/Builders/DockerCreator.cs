@@ -29,16 +29,20 @@ namespace Origam.ProjectAutomation.Builders
     public class DockerCreator : AbstractBuilder
     {
         public override string Name => "Start Docker Container";
-        private DockerManager dockerManager;
-        private string v;
 
-        public DockerCreator(string tag)
+        private bool IsNewVolume { get; set; } = false;
+        private string projectname;
+
+        private readonly DockerManager dockerManager;
+
+        public DockerCreator(string tag,string dockerApiAdress)
         {
-            this.dockerManager = new DockerManager(tag);
+            this.dockerManager = new DockerManager(tag, dockerApiAdress);
         }
 
         public override void Execute(Project project)
         {
+            projectname = project.Name;
             if(!dockerManager.IsDockerInstaled())
             {
                 throw new Exception("Docker is prerequired. Please install Docker.");
@@ -47,6 +51,10 @@ namespace Origam.ProjectAutomation.Builders
             {
                 throw new Exception(string.Format("Docker Volume {0} already exists. " +
                     "Please chose different Project Name.",project.Name));
+            }
+            else
+            {
+                IsNewVolume = true;
             }
             dockerManager.CreateVolume(project.Name);
             string DatabaseAdminPassword = Project.CreatePassword();
@@ -100,6 +108,10 @@ namespace Origam.ProjectAutomation.Builders
         }
         public override void Rollback()
         {
+           if(IsNewVolume)
+            {
+                dockerManager.RemoveVolume(projectname);
+            }
         }
     }
 }

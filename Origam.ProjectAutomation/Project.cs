@@ -369,6 +369,7 @@ namespace Origam.ProjectAutomation
         public string WebEmail { get;  set; }
         public int ActiveConfigurationIndex { get; set; }
         public string DockerEnvPath { get; internal set; }
+        public string DockerApiAddress { get; set; }
         #endregion
     }
     public enum DeploymentType

@@ -80,6 +80,18 @@ namespace OrigamArchitect
                 this["DatabaseTypeText"] = value;
             }
         }
-
+        [UserScopedSetting()]
+        [DefaultSettingValue("localhost")]
+        public string DockerApiAdress
+        {
+            get
+            {
+                return (string)this["DockerApiAdress"];
+            }
+            set
+            {
+                this["DockerApiAdress"] = value;
+            }
+        }
     }
 }

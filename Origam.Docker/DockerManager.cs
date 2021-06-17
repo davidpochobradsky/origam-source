@@ -45,9 +45,17 @@ namespace Origam.Docker
             }
         }
 
-        public DockerManager(string tag)
+        public DockerManager(string tag,string dockeradress)
         {
-            client = new DockerClientConfiguration().CreateClient();
+            if (dockeradress == "localhost")
+            {
+                client = new DockerClientConfiguration().CreateClient();
+            }
+            else
+            {
+                client = new DockerClientConfiguration(
+                    new Uri(string.Format("http://{0}:2375",dockeradress))).CreateClient();
+            }
             this.tag = tag;
         }
 
@@ -85,7 +93,22 @@ namespace Origam.Docker
             }
             return true;
         }
-
+        public bool RemoveVolume(string projectname)
+        {
+            try
+            {
+                Task.Run(async () =>
+                {
+                    await client.Volumes.RemoveAsync(projectname);
+                }).GetAwaiter().GetResult();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return false;
+            }
+            return true;
+        }
         public  bool DockerVolumeExists(string volumeName)
         {
             var task = Task.Run(async () =>
@@ -96,14 +119,18 @@ namespace Origam.Docker
         }
         public bool PullImage()
         {
+            if(!IsDockerInstaled())
+            {
+                return false;
+            }
             var progress = new Progress<JSONMessage>();
             client.Images.CreateImageAsync(
-                new ImagesCreateParameters()
-                {
-                    FromImage = repository,
-                    Tag = prefix + tag
-                }, null,
-                progress).ConfigureAwait(false);
+                    new ImagesCreateParameters()
+                    {
+                        FromImage = repository,
+                        Tag = prefix + tag
+                    }, null,
+                    progress).ConfigureAwait(false);
             return true;
         }
 
@@ -122,7 +149,6 @@ namespace Origam.Docker
             }
             return output;
         }
-
         public  string StartDockerContainer(DockerContainerParameter containerParameter)
         {
             if (!IsImageAlreadyPulled())
@@ -147,7 +173,7 @@ namespace Origam.Docker
             IList<Mount> mounts = new List<Mount>
             {
                 new Mount { Source = containerParameter.ProjectName, Target = "/var/lib/postgresql",Type = "volume"},
-                 new Mount { Source = containerParameter.SourceFolder, Target = "/home/origam/HTML5/data/origam",Type = "bind"}
+            //  new Mount { Source = containerParameter.SourceFolder, Target = "/home/origam/HTML5/data/origam",Type = "bind"}
             };
             IDictionary<string, IList<PortBinding>> portbind = new Dictionary<string, IList<PortBinding>>
             {

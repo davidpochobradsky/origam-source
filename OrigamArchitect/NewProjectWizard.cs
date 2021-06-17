@@ -154,6 +154,7 @@ namespace OrigamArchitect
             _settings.BinFolder = txtBinFolderRoot.Text;
             _settings.DatabaseServerName = txtServerName.Text;
             _settings.DatabaseTypeText = txtDatabaseType.GetItemText(txtDatabaseType.SelectedItem);
+            _settings.DockerApiAdress = txtDockerApiAdress.Text;
             _settings.Save();
         }
 
@@ -465,8 +466,13 @@ namespace OrigamArchitect
                 case DeploymentType.DockerPostgres:
                     pageDeploymentType.NextPage = pageTemplateType;
                     //Pull docker image. This is to save time. The image size is 1,3 GB. 
-                    var tag = "master-latest";
-                    new DockerManager(tag.GetAssemblyVersion()).PullImage();
+                    _project.DockerApiAddress = txtDockerApiAdress.Text;
+                    if(!new DockerManager("master-latest".GetAssemblyVersion(),txtDockerApiAdress.Text).PullImage())
+                    {
+                        AsMessageBox.ShowError(this, "Can't pull docker image. Check docker address.", strings.NewProjectWizard_Title, null);
+                        e.Cancel = true;
+                        return;
+                    }
                     break;
             }
         }
@@ -475,6 +481,10 @@ namespace OrigamArchitect
             if (cboDeploymentType.SelectedIndex < 0)
             {
                 cboDeploymentType.SelectedIndex = 0;
+            }
+            if(string.IsNullOrEmpty(txtDockerApiAdress.Text))
+            {
+                txtDockerApiAdress.Text = _settings.DockerApiAdress;
             }
         }
 
@@ -550,8 +560,8 @@ namespace OrigamArchitect
             {
                 if(Deployment == DeploymentType.DockerPostgres)
                 {
-                    txtServerName.Text = "localhost";
-                    txtPort.Text = "5432";
+                    txtServerName.Text = txtDockerApiAdress.Text;
+                    txtPort.Text = "5433";
                 }
                 chkIntegratedAuthentication.Enabled = true;
                 txtPort.Visible = !chkIntegratedAuthentication.Checked;
@@ -783,6 +793,20 @@ namespace OrigamArchitect
             _project.WebFirstName = txtWebFirstname.Text;
             _project.WebSurname = txtWebSurname.Text;
             _project.WebEmail = txtWebEmail.Text;
+        }
+
+        private void cboDeploymentType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if(cboDeploymentType.SelectedIndex == 1)
+            {
+                txtDockerApiAdress.Show();
+                dockerlabel.Show();
+            }
+            else
+            {
+                txtDockerApiAdress.Hide();
+                dockerlabel.Hide();
+            }
         }
     }
 }

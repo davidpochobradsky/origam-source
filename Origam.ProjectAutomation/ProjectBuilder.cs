@@ -116,7 +116,7 @@ namespace Origam.ProjectAutomation
                 if (_project.Deployment == DeploymentType.DockerPostgres)
                 {
                     tasks.Add(new DockerBuilder());
-                    tasks.Add(new DockerCreator("master-latest".GetAssemblyVersion()));
+                    tasks.Add(new DockerCreator("master-latest".GetAssemblyVersion(),_project.DockerApiAddress));
                 }
                 tasks.Add(settingsBuilder);
                 tasks.Add(dataDatabaseBuilder);

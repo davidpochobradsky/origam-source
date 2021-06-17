@@ -46,7 +46,7 @@ namespace Origam.ProjectAutomation.Builders
                     cmdfile = Path.Combine(newProjectFolder, "StartWebServer_" + project.Name + ".cmd");
                     var stringBuilder = new StringBuilder();
                     stringBuilder.AppendLine("docker start " + project.Name);
-                    stringBuilder.Append("docker exec -it " + project.Name + " bash startOrigamServer.sh");
+                    stringBuilder.Append("docker exec --env-file " + project.DockerEnvPath + " -it " + project.Name + " bash startOrigamServer.sh");
                     File.WriteAllText(cmdfile, stringBuilder.ToString());
                     cmdfile = Path.Combine(newProjectFolder, "StartContainer_" + project.Name + ".cmd");
                     string text = "docker start " + project.Name;
@@ -112,7 +112,7 @@ namespace Origam.ProjectAutomation.Builders
                         case "OrigamSettings_SchemaExtensionGuid":
                             return project.NewPackageId;
                         case "OrigamSettings_DbHost":
-                            return project.DatabaseServerName;
+                            return SetDbHost(project);
                         case "OrigamSettings_DbPort":
                             return project.Port.ToString();
                         case "OrigamSettings_DbUsername":
@@ -145,6 +145,16 @@ namespace Origam.ProjectAutomation.Builders
             }
             return line[1];
         }
+
+        private string SetDbHost(Project project)
+        {
+            if (project.Deployment == DeploymentType.DockerPostgres)
+            {
+                return "localhost";
+            }
+            return project.DatabaseServerName;
+        }
+
         private List<string> FillDockerParameters()
         {
             List<string> parameters = new List<string>

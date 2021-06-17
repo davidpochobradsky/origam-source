@@ -142,6 +142,8 @@ namespace OrigamArchitect
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.projectBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.projectBindingSource1 = new System.Windows.Forms.BindingSource(this.components);
+            this.txtDockerApiAdress = new System.Windows.Forms.TextBox();
+            this.dockerlabel = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.wizard1)).BeginInit();
             this.pageWelcome.SuspendLayout();
             this.pageDeploymentType.SuspendLayout();
@@ -270,6 +272,8 @@ namespace OrigamArchitect
             // 
             // pageDeploymentType
             // 
+            this.pageDeploymentType.Controls.Add(this.dockerlabel);
+            this.pageDeploymentType.Controls.Add(this.txtDockerApiAdress);
             this.pageDeploymentType.Controls.Add(this.label1);
             this.pageDeploymentType.Controls.Add(this.lblName);
             this.pageDeploymentType.Controls.Add(this.txtName);
@@ -323,6 +327,7 @@ namespace OrigamArchitect
             this.cboDeploymentType.Name = "cboDeploymentType";
             this.cboDeploymentType.Size = new System.Drawing.Size(241, 23);
             this.cboDeploymentType.TabIndex = 4;
+            this.cboDeploymentType.SelectedIndexChanged += new System.EventHandler(this.cboDeploymentType_SelectedIndexChanged);
             // 
             // lblDeploymentType
             // 
@@ -1252,6 +1257,22 @@ namespace OrigamArchitect
             // 
             this.projectBindingSource1.DataSource = typeof(Origam.ProjectAutomation.Project);
             // 
+            // txtdockeradress
+            // 
+            this.txtDockerApiAdress.Location = new System.Drawing.Point(164, 154);
+            this.txtDockerApiAdress.Name = "txtdockeradress";
+            this.txtDockerApiAdress.Size = new System.Drawing.Size(556, 23);
+            this.txtDockerApiAdress.TabIndex = 15;
+            // 
+            // dockerlabel
+            // 
+            this.dockerlabel.AutoSize = true;
+            this.dockerlabel.Location = new System.Drawing.Point(4, 157);
+            this.dockerlabel.Name = "dockerlabel";
+            this.dockerlabel.Size = new System.Drawing.Size(95, 15);
+            this.dockerlabel.TabIndex = 16;
+            this.dockerlabel.Text = "Docker IP Adress";
+            // 
             // NewProjectWizard
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1407,5 +1428,7 @@ namespace OrigamArchitect
         private System.Windows.Forms.TextBox txtWebFirstname;
         private System.Windows.Forms.Label label30;
         private System.Windows.Forms.TextBox txtWebUserPasswordConfirmed;
+        private System.Windows.Forms.Label dockerlabel;
+        private System.Windows.Forms.TextBox txtDockerApiAdress;
     }
 }
