@@ -47,32 +47,25 @@ namespace Origam.Docker
 
         public DockerManager(string tag,string dockeradress)
         {
-            if (dockeradress == "http://localhost:2375")
-            {
-                client = new DockerClientConfiguration().CreateClient();
-            }
-            else
-            {
                 client = new DockerClientConfiguration(
                     new Uri(dockeradress)).CreateClient();
-            }
             this.tag = tag;
         }
 
-        public  bool IsDockerInstaled()
+        public  string IsDockerInstaled()
         {
             try
             {
                 var task = Task.Run(async () =>
                 {
-                    return await client.System.GetVersionAsync();
-                }).GetAwaiter().GetResult();
+                    return await client.System.GetSystemInfoAsync();
+                }).Result;
+                return task.OSType;
             } catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-                return false; 
+                return ""; 
             }
-            return true;
         }
         public bool CreateVolume(string name)
         {
@@ -93,22 +86,6 @@ namespace Origam.Docker
             }
             return true;
         }
-        public bool RemoveVolume(string projectname)
-        {
-            try
-            {
-                Task.Run(async () =>
-                {
-                    await client.Volumes.RemoveAsync(projectname);
-                }).GetAwaiter().GetResult();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return false;
-            }
-            return true;
-        }
         public  bool DockerVolumeExists(string volumeName)
         {
             var task = Task.Run(async () =>
@@ -118,11 +95,7 @@ namespace Origam.Docker
             return task.Result.Volumes.Where(volumelist => volumelist.Name == volumeName).Any();
         }
         public bool PullImage()
-        {
-            if(!IsDockerInstaled())
-            {
-                return false;
-            }
+        { 
             var progress = new Progress<JSONMessage>();
             client.Images.CreateImageAsync(
                     new ImagesCreateParameters()
@@ -131,6 +104,28 @@ namespace Origam.Docker
                         Tag = prefix + tag
                     }, null,
                     progress).ConfigureAwait(false);
+            return true;
+        }
+
+        public bool RemoveContainer(string containerID)
+        {
+            try
+            {
+                Task.Run(async () =>
+                {
+                    await client.Containers.RemoveContainerAsync(containerID,
+                        new ContainerRemoveParameters 
+                        { 
+                            RemoveVolumes = true,
+                            Force = true
+                        });
+                }).GetAwaiter().GetResult();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return false;
+            }
             return true;
         }
 

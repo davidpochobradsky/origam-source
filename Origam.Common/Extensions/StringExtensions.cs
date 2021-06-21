@@ -66,7 +66,7 @@ namespace Origam.Extensions
                 var wrappedText = text.Insert(indexOfNearestSpace,
                     Environment.NewLine);
                 return wrappedText;
-            } 
+            }
             return text;
         }
 
@@ -78,7 +78,7 @@ namespace Origam.Extensions
 
             for (int n = 0; n < text.Length; n++)
             {
-                var position = (int) graphics
+                var position = (int)graphics
                     .MeasureString(text.Substring(0, i), font)
                     .Width;
 
@@ -92,9 +92,9 @@ namespace Origam.Extensions
                     i++;
                 else if (error < 0)
                     i--;
-                
+
                 if (i >= text.Length)
-                    return i-1;
+                    return i - 1;
                 if (i < 0)
                     return 0;
             }
@@ -105,10 +105,10 @@ namespace Origam.Extensions
         private static int GetIndexOfNearestSpace(string text, int pivotIndex)
         {
             var canBeSplit = text.Contains(' ');
-            
-            if (!canBeSplit) 
-                return text.Length; 
-            
+
+            if (!canBeSplit)
+                return text.Length;
+
             var spaceIndices = FindAllSpaceIndices(text);
 
             return spaceIndices
@@ -128,19 +128,19 @@ namespace Origam.Extensions
             }
             return indicesOfSpaces;
         }
-        
+
         public static string FirstToUpper(this string input)
         {
             switch (input)
             {
                 case null: throw new ArgumentNullException(nameof(input));
                 case "": throw new ArgumentException($"{nameof(input)} cannot be empty", nameof(input));
-                default: return input.Substring(0,1).ToUpper() +
+                default: return input.Substring(0, 1).ToUpper() +
                                 input.Substring(1).ToLower();
             }
         }
-        public static string[] Split(this string str, string splitWith) => 
-            str.Split(new [] {splitWith}, StringSplitOptions.None);
+        public static string[] Split(this string str, string splitWith) =>
+            str.Split(new[] { splitWith }, StringSplitOptions.None);
 
         public static string ReplaceInvalidFileCharacters(
             this string fileNameCandidate, string replaceWith)
@@ -166,7 +166,8 @@ namespace Origam.Extensions
             var currentVersion = Assembly.GetExecutingAssembly().
                 GetCustomAttribute<AssemblyFileVersionAttribute>().Version;
             Console.WriteLine(string.Format("Current version is {0}", currentVersion));
-            if (!currentVersion.StartsWith("1.0.0.0"))
+            if (!currentVersion.StartsWith("1.0.0.0") &&
+                !currentVersion.StartsWith("0.0.0.0") )
             {
                 tag = currentVersion;
             }

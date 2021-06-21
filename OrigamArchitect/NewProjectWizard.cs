@@ -468,13 +468,17 @@ namespace OrigamArchitect
                 case DeploymentType.DockerPostgres:
                     pageDeploymentType.NextPage = pageTemplateType;
                     //Pull docker image. This is to save time. The image size is 1,3 GB. 
-                    if(!new DockerManager("master-latest".GetAssemblyVersion(),txtDockerApiAdress.Text).PullImage())
+                    DockerOperationSystem dockerOs = new DockerOperationSystem(new DockerManager("master-latest".GetAssemblyVersion(),
+                        txtDockerApiAdress.Text).IsDockerInstaled());
+                    if(dockerOs.IsOnline())
                     {
-                        AsMessageBox.ShowError(this, "Can't pull docker image. Check docker address.", strings.NewProjectWizard_Title, null);
+                        AsMessageBox.ShowError(this, "Can't connect to docker instance. Check docker address.", strings.NewProjectWizard_Title, null);
                         e.Cancel = true;
                         return;
                     }
+                    new DockerManager("master-latest".GetAssemblyVersion(), txtDockerApiAdress.Text).PullImage();
                     _project.DockerApiAddress = txtDockerApiAdress.Text;
+                    _project.DockerOs = dockerOs;
                     break;
             }
         }
@@ -500,12 +504,14 @@ namespace OrigamArchitect
             {
                 txtdosourcefolder.Show();
                 dockerlabel.Show();
+                dockerlabeldescription.Show();
                 txtdosourcefolder.Text = _settings.DockerSourceFolder;
             }
             else
             {
                 txtdosourcefolder.Hide();
                 dockerlabel.Hide();
+                dockerlabeldescription.Hide();
             }
         }
         private void PageGit_Commit(object sender, WizardPageConfirmEventArgs e)
@@ -816,11 +822,13 @@ namespace OrigamArchitect
             {
                 txtDockerApiAdress.Show();
                 dockerlabel.Show();
+                dockerlabeldescription.Show();
             }
             else
             {
                 txtDockerApiAdress.Hide();
                 dockerlabel.Hide();
+                dockerlabeldescription.Hide();
             }
         }
     }

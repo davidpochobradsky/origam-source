@@ -31,7 +31,7 @@ namespace Origam.ProjectAutomation.Builders
         public override string Name => "Start Docker Container";
 
         private bool IsNewVolume { get; set; } = false;
-        private string projectname;
+        public string ContainerID { get; private set; }
 
         private readonly DockerManager dockerManager;
 
@@ -42,8 +42,7 @@ namespace Origam.ProjectAutomation.Builders
 
         public override void Execute(Project project)
         {
-            projectname = project.Name;
-            if(!dockerManager.IsDockerInstaled())
+            if(string.IsNullOrEmpty(dockerManager.IsDockerInstaled()))
             {
                 throw new Exception("Docker is prerequired. Please install Docker.");
             }
@@ -57,7 +56,7 @@ namespace Origam.ProjectAutomation.Builders
                 IsNewVolume = true;
             }
             dockerManager.CreateVolume(project.Name);
-            string DatabaseAdminPassword = Project.CreatePassword();
+            string DatabaseAdminPassword = project.DatabaseAdminPassword;
             string containerId = StartDockerContainer(DatabaseAdminPassword, project);
             project.DatabaseUserName = "postgres";
             project.DatabasePassword = DatabaseAdminPassword;
@@ -92,7 +91,8 @@ namespace Origam.ProjectAutomation.Builders
                 DockerPort = project.DockerPort.ToString(),
                 DockerSourcePath = project.DockerSourcePath
             };
-            return dockerManager.StartDockerContainer(containerParameters);
+            ContainerID = dockerManager.StartDockerContainer(containerParameters);
+            return ContainerID;
         }
         private bool IsContainerRunningProperly(string containerId)
         {
@@ -111,7 +111,7 @@ namespace Origam.ProjectAutomation.Builders
         {
            if(IsNewVolume)
             {
-                dockerManager.RemoveVolume(projectname);
+                dockerManager.RemoveContainer(ContainerID);
             }
         }
     }

@@ -43,6 +43,7 @@ namespace OrigamArchitect
             this.lblWelcome1 = new System.Windows.Forms.Label();
             this.btnAdminElevate = new System.Windows.Forms.Button();
             this.pageDeploymentType = new AeroWizard.WizardPage();
+            this.dockerlabeldescription = new System.Windows.Forms.Label();
             this.dockerlabel = new System.Windows.Forms.Label();
             this.txtDockerApiAdress = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -274,6 +275,7 @@ namespace OrigamArchitect
             // 
             // pageDeploymentType
             // 
+            this.pageDeploymentType.Controls.Add(this.dockerlabeldescription);
             this.pageDeploymentType.Controls.Add(this.dockerlabel);
             this.pageDeploymentType.Controls.Add(this.txtDockerApiAdress);
             this.pageDeploymentType.Controls.Add(this.label1);
@@ -288,6 +290,15 @@ namespace OrigamArchitect
             this.pageDeploymentType.Commit += new System.EventHandler<AeroWizard.WizardPageConfirmEventArgs>(this.pageDeploymentType_Commit);
             this.pageDeploymentType.Initialize += new System.EventHandler<AeroWizard.WizardPageInitEventArgs>(this.pageDeploymentType_Initialize);
             // 
+            // dockerlabeldescription
+            // 
+            this.dockerlabeldescription.AutoSize = true;
+            this.dockerlabeldescription.Location = new System.Drawing.Point(158, 203);
+            this.dockerlabeldescription.Name = "dockerlabeldescription";
+            this.dockerlabeldescription.Size = new System.Drawing.Size(200, 15);
+            this.dockerlabeldescription.TabIndex = 1;
+            this.dockerlabeldescription.Text = "Default value is http://localhost:2375";
+            // 
             // dockerlabel
             // 
             this.dockerlabel.AutoSize = true;
@@ -299,7 +310,7 @@ namespace OrigamArchitect
             // 
             // txtDockerApiAdress
             // 
-            this.txtDockerApiAdress.Location = new System.Drawing.Point(164, 154);
+            this.txtDockerApiAdress.Location = new System.Drawing.Point(161, 154);
             this.txtDockerApiAdress.Name = "txtDockerApiAdress";
             this.txtDockerApiAdress.Size = new System.Drawing.Size(556, 23);
             this.txtDockerApiAdress.TabIndex = 15;
@@ -341,7 +352,7 @@ namespace OrigamArchitect
             this.cboDeploymentType.Items.AddRange(new object[] {
             "Docker",
             "Docker Postgres"});
-            this.cboDeploymentType.Location = new System.Drawing.Point(164, 97);
+            this.cboDeploymentType.Location = new System.Drawing.Point(161, 97);
             this.cboDeploymentType.Name = "cboDeploymentType";
             this.cboDeploymentType.Size = new System.Drawing.Size(241, 23);
             this.cboDeploymentType.TabIndex = 4;
@@ -730,9 +741,9 @@ namespace OrigamArchitect
             this.dockerSourceFolder.AutoSize = true;
             this.dockerSourceFolder.Location = new System.Drawing.Point(3, 280);
             this.dockerSourceFolder.Name = "dockerSourceFolder";
-            this.dockerSourceFolder.Size = new System.Drawing.Size(119, 15);
+            this.dockerSourceFolder.Size = new System.Drawing.Size(117, 15);
             this.dockerSourceFolder.TabIndex = 1;
-            this.dockerSourceFolder.Text = "Docker Source Folder";
+            this.dockerSourceFolder.Text = "Docker Model Folder";
             // 
             // txtdosourcefolder
             // 
@@ -1453,5 +1464,6 @@ namespace OrigamArchitect
         private System.Windows.Forms.TextBox txtDockerApiAdress;
         private System.Windows.Forms.Label dockerSourceFolder;
         private System.Windows.Forms.TextBox txtdosourcefolder;
+        private System.Windows.Forms.Label dockerlabeldescription;
     }
 }

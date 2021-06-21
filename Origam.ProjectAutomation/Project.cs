@@ -20,6 +20,7 @@ along with ORIGAM. If not, see <http://www.gnu.org/licenses/>.
 #endregion
 
 
+using Origam.Docker;
 using System;
 using System.IO;
 using static Origam.DA.Common.Enums;
@@ -371,6 +372,8 @@ namespace Origam.ProjectAutomation
         public string DockerEnvPath { get; internal set; }
         public string DockerApiAddress { get; set; }
         public string DockerSourcePath { get; set; }
+        public string DatabaseAdminPassword { get; } = CreatePassword();
+        public DockerOperationSystem DockerOs { get; set; }
         #endregion
     }
     public enum DeploymentType
