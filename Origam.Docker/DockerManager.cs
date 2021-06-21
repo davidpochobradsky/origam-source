@@ -47,14 +47,14 @@ namespace Origam.Docker
 
         public DockerManager(string tag,string dockeradress)
         {
-            if (dockeradress == "localhost")
+            if (dockeradress == "http://localhost:2375")
             {
                 client = new DockerClientConfiguration().CreateClient();
             }
             else
             {
                 client = new DockerClientConfiguration(
-                    new Uri(string.Format("http://{0}:2375",dockeradress))).CreateClient();
+                    new Uri(dockeradress)).CreateClient();
             }
             this.tag = tag;
         }
@@ -173,8 +173,15 @@ namespace Origam.Docker
             IList<Mount> mounts = new List<Mount>
             {
                 new Mount { Source = containerParameter.ProjectName, Target = "/var/lib/postgresql",Type = "volume"},
-            //  new Mount { Source = containerParameter.SourceFolder, Target = "/home/origam/HTML5/data/origam",Type = "bind"}
             };
+            if(!string.IsNullOrEmpty(containerParameter.DockerSourcePath))
+            {
+                mounts.Add(new Mount { Source = containerParameter.DockerSourcePath, Target = "/home/origam/HTML5/data/origam", Type = "bind" });
+            }
+            else
+            {
+                mounts.Add(new Mount { Source = containerParameter.SourceFolder, Target = "/home/origam/HTML5/data/origam", Type = "bind" });
+            }
             IDictionary<string, IList<PortBinding>> portbind = new Dictionary<string, IList<PortBinding>>
             {
                 { "8080/tcp", new List<PortBinding> { new PortBinding {HostPort = containerParameter.DockerPort } }},

@@ -155,6 +155,7 @@ namespace OrigamArchitect
             _settings.DatabaseServerName = txtServerName.Text;
             _settings.DatabaseTypeText = txtDatabaseType.GetItemText(txtDatabaseType.SelectedItem);
             _settings.DockerApiAdress = txtDockerApiAdress.Text;
+            _settings.DockerSourceFolder = txtdosourcefolder.Text;
             _settings.Save();
         }
 
@@ -364,6 +365,7 @@ namespace OrigamArchitect
         private void pagePaths_Initialize(object sender, WizardPageInitEventArgs e)
         {
             txtSourcesFolder.Text = _settings.SourcesFolder;
+            txtdosourcefolder.Text = _settings.DockerSourceFolder;
             txtBinFolderRoot.Text = _settings.BinFolder;
             txtTemplateFolder.Text = Path.Combine(Application.StartupPath, @"Project Templates\Default");
             txtBinFolderRoot.Visible = false;
@@ -466,13 +468,13 @@ namespace OrigamArchitect
                 case DeploymentType.DockerPostgres:
                     pageDeploymentType.NextPage = pageTemplateType;
                     //Pull docker image. This is to save time. The image size is 1,3 GB. 
-                    _project.DockerApiAddress = txtDockerApiAdress.Text;
                     if(!new DockerManager("master-latest".GetAssemblyVersion(),txtDockerApiAdress.Text).PullImage())
                     {
                         AsMessageBox.ShowError(this, "Can't pull docker image. Check docker address.", strings.NewProjectWizard_Title, null);
                         e.Cancel = true;
                         return;
                     }
+                    _project.DockerApiAddress = txtDockerApiAdress.Text;
                     break;
             }
         }
@@ -492,7 +494,20 @@ namespace OrigamArchitect
         {
 
         }
-
+        private void PageGit_Init(object sender, WizardPageConfirmEventArgs e)
+        {
+            if (Deployment == DeploymentType.DockerPostgres)
+            {
+                txtdosourcefolder.Show();
+                dockerlabel.Show();
+                txtdosourcefolder.Text = _settings.DockerSourceFolder;
+            }
+            else
+            {
+                txtdosourcefolder.Hide();
+                dockerlabel.Hide();
+            }
+        }
         private void PageGit_Commit(object sender, WizardPageConfirmEventArgs e)
         {
             if (string.IsNullOrEmpty(txtGitUser.Text) && gitrepo.Checked)
@@ -528,6 +543,7 @@ namespace OrigamArchitect
             _project.GitRepository = gitrepo.Checked;
             _project.Gitusername = txtGitUser.Text;
             _project.Gitemail = txtGitEmail.Text;
+            _project.DockerSourcePath = txtdosourcefolder.Text;
             if( Deployment == DeploymentType.Local)
             {
                 pageGit.NextPage = pageReview;
@@ -560,7 +576,6 @@ namespace OrigamArchitect
             {
                 if(Deployment == DeploymentType.DockerPostgres)
                 {
-                    txtServerName.Text = txtDockerApiAdress.Text;
                     txtPort.Text = "5433";
                 }
                 chkIntegratedAuthentication.Enabled = true;

@@ -81,7 +81,7 @@ namespace OrigamArchitect
             }
         }
         [UserScopedSetting()]
-        [DefaultSettingValue("localhost")]
+        [DefaultSettingValue("http://localhost:2375")]
         public string DockerApiAdress
         {
             get
@@ -91,6 +91,19 @@ namespace OrigamArchitect
             set
             {
                 this["DockerApiAdress"] = value;
+            }
+        }
+        [UserScopedSetting()]
+        [DefaultSettingValue("")]
+        public string DockerSourceFolder
+        {
+            get
+            {
+                return (string)this["DockerSourceFolder"];
+            }
+            set
+            {
+                this["DockerSourceFolder"] = value;
             }
         }
     }

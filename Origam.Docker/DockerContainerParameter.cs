@@ -28,5 +28,6 @@ namespace Origam.Docker
         public string ProjectName { get; set; }
         public string SourceFolder { get; set; }
         public string DockerPort { get; set; }
+        public string DockerSourcePath { get; set; }
     }
 }

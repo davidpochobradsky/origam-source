@@ -89,7 +89,8 @@ namespace Origam.ProjectAutomation.Builders
                 AdminPassword = databaseAdminPassword,
                 ProjectName = project.Name,
                 SourceFolder = project.SourcesFolder,
-                DockerPort = project.DockerPort.ToString()
+                DockerPort = project.DockerPort.ToString(),
+                DockerSourcePath = project.DockerSourcePath
             };
             return dockerManager.StartDockerContainer(containerParameters);
         }
